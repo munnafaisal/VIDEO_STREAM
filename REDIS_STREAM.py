@@ -6,15 +6,19 @@ import traceback
 import threading
 import pickle
 import json
+import argparse
 
+parser = argparse.ArgumentParser()
+parser.add_argument('-c', '--channel', default="test")
 
+args=parser.parse_args()
 
 POOL = redis.ConnectionPool(host= "localhost", port= 6379, db=0)
 REDIS_CLIENT = redis.Redis(connection_pool= POOL)
 
 
 pubsub = REDIS_CLIENT.pubsub()
-pubsub.subscribe("test")
+pubsub.subscribe(args.channel)
 
 
 def get_stream(pub):
