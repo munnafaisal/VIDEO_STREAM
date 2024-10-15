@@ -14,7 +14,19 @@ parser.add_argument('-n', '--cam_name', default= "cam_1")
 
 args=parser.parse_args()
 
+#### POOL Redis connection and create REDIS Client
+
+POOL = redis.ConnectionPool(host= "localhost", port= 6379, db=0, password = "123")
+'''
+If you do not setup redis password then discard the password segment. 
+It is recommended to setup redis server password
+Ex ..
+ 
 POOL = redis.ConnectionPool(host= "localhost", port= 6379, db=0)
+
+
+'''
+
 REDIS_CLIENT = redis.Redis(connection_pool= POOL)
 pub_chn_name = args.channel
 data_dict = {}
@@ -25,11 +37,14 @@ if REDIS_CLIENT.ping():
 else:
     print("REDIS server not available ")
 
-
-#cap = cv2.VideoCapture("rtsp://admin:admin@192.168.0.100:1935", cv2.CAP_FFMPEG)
 cap = cv2.VideoCapture(args.rtsp, cv2.CAP_FFMPEG)
 
 def get_cap():
+    '''
+    This function create VideoCapture object
+    :return:
+    VideoCapture object
+    '''
 
     try:
         cap = cv2.VideoCapture(args.rtsp, cv2.CAP_FFMPEG)
@@ -40,6 +55,12 @@ def get_cap():
 
 def get_stream():
 
+    '''
+    A while loop is executed
+    :return:
+    Video Frame
+    '''
+
     global cap
 
     while True:
@@ -47,7 +68,6 @@ def get_stream():
         try:
             if cap.isOpened():
                 ret, frame = cap.read()
-
 
                 if not ret:
                     print(ret)
@@ -58,15 +78,16 @@ def get_stream():
                 else:
                     yield frame
             else:
-                print("vidcap not ready")
+                print("video capture not ready")
 
-                cap.release()
+                if cap is not None:
+                    cap.release()
                 time.sleep(2)
-                cap = get_cap()
 
+                cap = get_cap()
         except:
             print(traceback.print_exc())
-            print("stream not available")
+            print("video stream not available \n Trying create new video capture object ")
             time.sleep(2)
 
             if cap is not None:
@@ -91,6 +112,11 @@ def check_video():
 
 def update_data(img):
 
+    '''
+    insert image and additional data in the dictionary to published on redis channel
+    :param img:
+    :return:
+    '''
     data_dict["idx"] = 1
     data_dict["img"] = img
     data_dict["cam_name"] = args.cam_name
@@ -99,6 +125,12 @@ def update_data(img):
 
 
 def publish_on_redis(chn_name):
+
+    '''
+
+    :param chn_name: Redis channel name
+    :return: None
+    '''
 
     global index
     index = 0

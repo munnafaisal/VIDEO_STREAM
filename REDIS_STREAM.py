@@ -13,7 +13,7 @@ parser.add_argument('-c', '--channel', default="test")
 
 args=parser.parse_args()
 
-POOL = redis.ConnectionPool(host= "localhost", port= 6379, db=0)
+POOL = redis.ConnectionPool(host= "localhost", port= 6379, db=0,password = "123")
 REDIS_CLIENT = redis.Redis(connection_pool= POOL)
 
 
@@ -23,7 +23,7 @@ pubsub.subscribe(args.channel)
 
 def get_stream(pub):
 
-    for message in pubsub.listen():
+    for message in pub.listen():
         if message.get("type") == "message":
 
             data = message.get("data")
